@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<div class="header">
+    <div class="logo">l</div>
+    <div class="logo_text">
+        Подсказки по организациям
+    </div>
+</div>
+<div class="box">
+    <div class="info">
+        <div class="search">
+        <div class="search_text">Компания или ИП</div>
+        <div class="search_input"><input id="data" name="data" type="text">
+            <div id="list_box" class="list_box">
+                <ul id="list"></ul>
+            </div>
+        </div>
+    </div>
+        <div><b>Организация</b></div>
+        <div class="info_item">
+            <div>Краткое наименование</div>
+            <input type="text" name="" id="short_with_opf" readonly>
+        </div>
+        <div class="info_item">
+            <div>Полное наименование</div>
+            <input type="text" name="" id="full_with_opf"readonly>
+        </div>
+        <div class="info_item">
+            <div>ИНН/КПП</div>
+            <input type="text" name="" id="inn"readonly>
+        </div>
+        <div class="info_item">
+            <div>Адрес</div>
+            <input type="text" name="" id="address"readonly>
+        </div>
+    </div>
+</div>
+
+<script type="application/javascript">
+    const getData = () => {
+        const data = document.getElementById("data")
+        const hide=document.querySelector("#list_box")
+        hide.classList.add('hide')
+        data.oninput = () => {
+            apiGet(data.value)
+            hide.classList.remove('hide')
+        }
+    }
+    const apiGet = (input_data) => {
+        const url = "https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/party";
+        const token = "30389af7b842c7a39fe4f3b0971a54aa8626a580";
+        const query = input_data;
+        const options = {
+            method: "POST",
+            mode: "cors",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "Authorization": "Token " + token
+            },
+            body: JSON.stringify({query: query})
+        }
+
+        fetch(url, options)
+            .then(response => response.json())
+            .then(({suggestions}) => {
+                mapList(suggestions)
+            })
+            .catch(error => console.log("error", error));
+    }
+    const mapList = (data) => {
+
+        const list = document.querySelector("#list")
+        const listItem=data.map((el)=>{
+            const li=document.createElement('li')
+            li.classList.add('list_item')
+            li.textContent=el.value
+            return li
+        })
+        list.replaceChildren(...listItem)
+        list.addEventListener('click',({target})=>{
+            const li=target.closest('li')
+            if(!li) return
+            data.map(el=>{
+                if(el.value==target.innerText){
+                    const hide=document.querySelector("#list_box")
+                    hide.classList.add('hide')
+                    postData(el)
+                    for (let i=0;i<=listItem.length;++i){
+                        listItem[i].remove()
+                    }
+
+                }
+            })
+
+        })
+    }
+    const postData = ({data}) => {
+        const short_with_opf=document.querySelector("#short_with_opf")
+        const full_with_opf=document.querySelector("#full_with_opf")
+        const address=document.querySelector("#address")
+        const inn=document.querySelector("#inn")
+        short_with_opf.value=data.name.short_with_opf
+        full_with_opf.value=data.name.full_with_opf
+        address.value=data.address.unrestricted_value
+        inn.value=`${data.inn} / ${data.kpp}`
+    }
+    getData()
+
+
+</script>
+</body>
+</html>
